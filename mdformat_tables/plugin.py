@@ -11,36 +11,25 @@ def update_mdit(mdit: MarkdownIt) -> None:
 
 
 def _to_string(
-    rows: Sequence[Sequence[str]], align: Sequence[Sequence[str]], widths: Sequence[int]
+    rows: Sequence[Sequence[str]], align: Sequence[Sequence[str]]
 ) -> List[str]:
     lines = []
-    lines.append(
-        "| "
-        + " | ".join(
-            f"{{:{al or '<'}{widths[i]}}}".format(text)
-            for i, (text, al) in enumerate(zip(rows[0], align[0]))
-        )
-        + " |"
-    )
+    # Column Heading Row
+    lines.append("| " + " | ".join(rows[0]) + " |")
+    # Delimiter Row
     lines.append(
         "| "
         + " | ".join(
             (":" if al in ("<", "^") else "-")
-            + "-" * (widths[i] - 2)
+            + "-"  # * (widths[i] - 2)
             + (":" if al in (">", "^") else "-")
             for i, al in enumerate(align[0])
         )
         + " |"
     )
-    for row, als in zip(rows[1:], align[1:]):
-        lines.append(
-            "| "
-            + " | ".join(
-                f"{{:{al or '<'}{widths[i]}}}".format(text)
-                for i, (text, al) in enumerate(zip(row, als))
-            )
-            + " |"
-        )
+    # Body Rows
+    for row in rows[1:]:
+        lines.append("| " + " | ".join(row) + " |")
     return lines
 
 
@@ -66,14 +55,9 @@ def _render_table(node: RenderTreeNode, context: RenderContext) -> str:
                 align[-1].append("")
             rows[-1].append(descendant.render(context))
 
-    # work out the widths for each column
-    widths = [
-        max(3, *(len(row[col_idx]) for row in rows)) for col_idx in range(len(rows[0]))
-    ]
-
     # write content
     # note: assuming always one header row
-    lines = _to_string(rows, align, widths)
+    lines = _to_string(rows, align)
 
     return "\n".join(lines)
 
